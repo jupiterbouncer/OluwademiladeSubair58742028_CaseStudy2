@@ -1,0 +1,222 @@
+Oluwademilade Subair
+58742028
+Cohort C
+
+7.24) 
+MariaDB [projects]> create table Department(
+    -> deptNo int(2) not null,
+    -> deptName varchar(30) not null,
+    -> mgrEmpNo varchar(4) not null unique,
+    -> primary key(deptNo));
+Query OK, 0 rows affected (0.031 sec)
+
+MariaDB [projects]> create table Employee(
+    -> empNo varchar(4) not null,
+    -> fName varchar(30) not null,
+    -> lName varchar(30),
+    -> address varchar(50),
+    -> DOB date,
+    -> sex enum('M', 'F'),
+    -> position enum('Manager', 'Team Leader', 'Analyst', 'Software Developer'),
+    -> deptNo int(2) not null,
+    -> primary key(empNo),
+    -> foreign key(deptNo) references Department(deptNo),
+    -> constraint datecheck check(DOB <= '2026-06-25'));
+Query OK, 0 rows affected (0.031 sec)
+
+MariaDB [projects]> alter table department
+    -> add constraint fk_manager
+    -> foreign key(mgrEmpNo) references Employee(empNo);
+Query OK, 0 rows affected (0.122 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+MariaDB [projects]> create table Project(
+    -> projNo varchar(4) not null,
+    -> projName varchar(30) not null,
+    -> deptNo int(2) not null,
+    -> primary key(projNo),
+    -> foreign key (deptNo) references Department(deptNo));
+Query OK, 0 rows affected (0.055 sec)
+
+MariaDB [projects]> create table WorksOn(
+    -> empNo varchar(4) not null,
+    -> projNo varchar(4) not null,
+    -> dateWorked date not null,
+    -> hoursWorked int,
+    -> primary key (empNo, projNo, dateWorked),
+    -> foreign key (empNo) references Employee(empNo),
+    -> foreign key (projNo) references Project(projNo),
+    -> constraint hoursWorked_ranged check (hoursWorked between 0 and 40));
+Query OK, 0 rows affected (0.027 sec)
+
+=========
+INSERTS
+=========
+MariaDB [Projects]> set foreign_key_checks = 0;
+Query OK, 0 rows affected (0.003 sec)
+
+MariaDB [projects]> insert into department values
+    -> (1, 'Engineering', 'E1'),
+    -> (2, 'Marketing', 'E4'),
+    -> (3, 'Finance', 'E7'),
+    -> (4, 'Operations', 'E10');
+Query OK, 4 rows affected (0.033 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+MariaDB [projects]> insert into employee values
+    -> ('E1', 'James', 'Owusu', '12 Accra Rd, Accra', '1985-03-15', 'M', 'Manager', 1),
+    -> ('E2', 'Abena', 'Mensah', '45 Tema Rd, Tema', '1990-07-22', 'F', 'Analyst', 1),
+    -> ('E3', 'Kofi', 'Asante', '8 Kumasi Rd, Kumasi', '1993-11-05', 'M', 'Software Developer', 1),
+    -> ('E4', 'Ama', 'Darko', '33 Osu Rd, Accra', '1988-01-30', 'F', 'Manager', 2),
+    -> ('E5', 'Kweku', 'Boateng', '17 Lapaz Rd, Accra', '1995-06-18', 'M', 'Team Leader', 2),
+    -> ('E6', 'Efua', 'Tetteh', '9 Adenta Rd, Accra', '1992-04-12', 'F', 'Analyst', 2),
+    -> ('E7', 'Yaw', 'Adjei', '21 East Legon, Accra', '1980-09-25', 'M', 'Manager', 3),
+    -> ('E8', 'Akosua', 'Frimpong', '5 Madina Rd, Accra', '1997-02-14', 'F', 'Software Developer', 3),
+    -> ('E9', 'Nana', 'Amponsah', '3 Dansoman Rd, Accra', '1991-08-09', 'M', 'Team Leader', 4),
+    -> ('E10', 'Adwoa', 'Sarpong', '14 Spintex Rd, Accra', '1986-05-21', 'F', 'Manager', 4);
+Query OK, 10 rows affected (0.039 sec)
+Records: 10  Duplicates: 0  Warnings: 0
+
+MariaDB [projects]> insert into project values
+    -> ('BWRD', 'Website Redesign', 1),
+    -> ('MRKA', 'Market Analysis', 2),
+    -> ('BDGF', 'Budget Forecast', 3),
+    -> ('SCCS', 'Supply Chain Control System', 1);
+Query OK, 4 rows affected (0.045 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+MariaDB [projects]> insert into workson values
+    -> ('E2', 'BWRD', '2024-01-10', 8),
+    -> ('E3', 'BWRD', '2024-01-10', 6),
+    -> ('E3', 'SCCS', '2024-01-15', 7),
+    -> ('E5', 'MRKA', '2024-01-12', 5),
+    -> ('E6', 'MRKA', '2024-01-12', 8),
+    -> ('E8', 'BDGF', '2024-01-11', 4),
+    -> ('E1', 'SCCS', '2024-01-15', 3),
+    -> ('E9', 'SCCS', '2024-01-18', 6),
+    -> ('E10', 'MRKA', '2024-01-20', 5),
+    -> ('E7', 'BDGF', '2024-01-22', 7);
+Query OK, 10 rows affected (0.030 sec)
+Records: 10  Duplicates: 0  Warnings: 0
+
+MariaDB [Projects]> set foreign_key_checks = 1;
+Query OK, 0 rows affected (0.000 sec)
+
+7.25)
+MariaDB [Projects]> create view FemaleManagersProject as
+    -> select empNo, fName, lName, position, e.deptNo
+    -> from employee e
+    -> inner join project p on e.deptNo = p.deptNo
+    -> where e.sex = 'F' and e.position = 'Manager'
+    -> order by p.projNo;
+Query OK, 0 rows affected (0.055 sec)
+
+7.26)
+MariaDB [projects]> create view EmployeeAttributes as
+    -> select e.empNo, e.fName, e.lName, p.projName, w.hoursWorked
+    -> from employee e
+    -> left join workson w ON e.empNo = w.empNo
+    -> left join project p ON w.projNo = p.projNo;
+Query OK, 0 rows affected (0.016 sec)
+
+7.27)
+MariaDB [projects]> create view EmpProject(empNo, projNo, totalHours) as
+    -> select w.empNo, w.projNo, sum(hoursWorked) as totalHours
+    -> from WorksOn w
+    -> inner join employee e on e.empNo = w.empNo
+    -> inner join project p on p.projNo = w.projNo
+    -> group by w.empNo, w.projNo;
+Query OK, 0 rows affected (0.015 sec)
+
+a) VALID
+MariaDB [projects]> select w.empNo, w.projNo, sum(hoursWorked) as totalHours
+    -> from employee e, project p, workson w
+    -> where e.empNo = w.empNo and p.projNo = w.projNo
+    -> group by w.empNo, w.projNo;
++-------+--------+------------+
+| empNo | projNo | totalHours |
++-------+--------+------------+
+| E1    | SCCS   |          3 |
+| E10   | MRKA   |          5 |
+| E2    | BWRD   |          8 |
+| E3    | BWRD   |          6 |
+| E3    | SCCS   |          7 |
+| E5    | MRKA   |          5 |
+| E6    | MRKA   |          8 |
+| E7    | BDGF   |          7 |
+| E8    | BDGF   |          4 |
+| E9    | SCCS   |          6 |
++-------+--------+------------+
+10 rows in set (0.001 sec)
+
+b) VALID
+MariaDB [projects]> select w.projNo
+    -> from employee e, project p, workson w
+    -> where e.empNo = w.empNo and p.projNo = w.projNo and w.projNo = 'SCCS'
+    -> group by w.empNo, w.projNo;
++--------+
+| projNo |
++--------+
+| SCCS   |
+| SCCS   |
+| SCCS   |
++--------+
+3 rows in set (0.001 sec)
+
+c) 
+MariaDB [projects]> select count(w.projNo)
+    -> from employee e, project p, workson w
+    -> where e.empNo = w.empNo and p.projNo = w.projNo and e.empNo = 'E1'
+    -> group by w.empNo, w.projNo;
++-----------------+
+| count(W.projNo) |
++-----------------+
+|               1 |
++-----------------+
+1 row in set (0.001 sec)
+
+d)
+MariaDB [projects]> select w.empNo, sum(hoursworked) as totalHours
+    -> from employee e, project p, workson w
+    -> where e.empNo = w.empNo and p.projNo = w.projNo
+    -> group by w.empNo, w.projNo;
++-------+------------+
+| empNo | totalHours |
++-------+------------+
+| E1    |          3 |
+| E10   |          5 |
+| E2    |          8 |
+| E3    |          6 |
+| E3    |          7 |
+| E5    |          5 |
+| E6    |          8 |
+| E7    |          7 |
+| E8    |          4 |
+| E9    |          6 |
++-------+------------+
+10 rows in set (0.001 sec)
+
+7.28)
+MariaDB [projects]> create table Part(
+    -> partNo varchar(4),
+    -> contract varchar(30),
+    -> partCost decimal(7,2),
+    -> primary key(partNo, contract));
+Query OK, 0 rows affected (0.023 sec)
+
+MariaDB [projects]> create view ExpensiveParts(partNo) as
+    -> select distinct partNo
+    -> from part
+    -> where partCost > 1000;
+Query OK, 0 rows affected (0.041 sec)
+
+A materialized view stores query results physically, so it needs to stay in sync when the base table changes. It will be handled with triggers on INSERT, UPDATE, and DELETE on Part:
+- INSERT: if the new row has partCost > 1000, add partNo to the materialised view
+- DELETE: if that partNo no longer has any contact with partCost > 1000, remove it
+- UPDATE: if cost crosses the 1000 mark, it will be added or removed accordingly
+
+When skipping access to the base table:
+- INSERT: If the new partCost > 1000, it will be added directly, no need to check Part
+- UPDATE increasing cost: If it goes from <1000 to >1000, we can insert; no base table check will be needed
+- UPDATE decreasing cost: We will check Part first, another contract for the same part might still be >1000, so we can't remove it without verifying
+- DELETE: We must check Part before removing the partNo
